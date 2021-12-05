@@ -1,10 +1,10 @@
 ﻿using AdventOfCode;
 using BenchmarkDotNet.Running;
 
-//Console.WriteLine("Hello, Advent of Code!");
+Console.WriteLine("Hello, Advent of Code!");
 
-//(int answer1, int answer2) = Day3.Run();
+(int answer1, int answer2) = Day4.Run();
 
-//Console.WriteLine($"Answer 1: {answer1}, Answer 2: {answer2}");
+Console.WriteLine($"Answer 1: {answer1}, Answer 2: {answer2}");
 
-BenchmarkRunner.Run<Benchmarks>();
+//BenchmarkRunner.Run<Benchmarks>();

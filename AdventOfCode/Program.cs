@@ -1,4 +1,6 @@
-﻿using AdventOfCode;
+﻿global using System.Diagnostics;
+global using System.Globalization;
+using AdventOfCode;
 
 Console.WriteLine("Hello, Advent of Code!");
 

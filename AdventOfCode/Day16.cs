@@ -1,12 +1,10 @@
-﻿using System.Globalization;
-
-namespace AdventOfCode;
+﻿namespace AdventOfCode;
 
 public static class Day16
 {
     static int RunPart1(Bit[] input)
     {
-        var packet = Decode(input);
+        _ = Decode(input);
         return 0;
     }
 
@@ -22,19 +20,73 @@ public static class Day16
         return (RunPart1(parsedInput), RunPart2(parsedInput));
     }
 
-    static Packet Decode(Bit[] content)
+    static IReadOnlyList<Packet> Decode(ReadOnlySpan<Bit> content)
     {
-        int version = ReadInt(content, 0, 3);
-        int type = ReadInt(content, 3, 3);
-        if (type == 4)
+        var header = DecodeHeader(content);
+        if (header.Type == 4) // Literal
         {
-            // Parse as literal
+            (var value, _) = DecodeLiteral(content[6..]);
+            return new[] { new Packet(header, value) };
         }
-        else
+        else // Operator
         {
-            // Parse as operator
+            var packets = new List<Packet>();
+            if (content[6].Value == 0)
+            {
+                int totalLength = content.ReadInt(7, 15);
+                int parsedLength = 0, i = 22;
+                while(parsedLength < totalLength)
+                {
+                    var subheader = DecodeHeader(content[i..]);
+                    i += 6;
+                    if (subheader.Type == 4)
+                    {
+                        var subliteral = DecodeLiteral(content[i..]);
+                        int sublength = subliteral.length + 6;
+                        i += sublength;
+                        parsedLength += sublength;
+                    }
+                    else
+                    {
+                        // TODO
+                    }
+                }
+            }
+            else
+            {
+                var subPacketsCount = content.ReadInt(7, 11);
+            }
+
+            return packets;
         }
-        return new(version, type);
+
+    }
+
+    static Header DecodeHeader(ReadOnlySpan<Bit> bits)
+    {
+        return new(bits.ReadInt(0, 3), bits.ReadInt(3, 3));
+    }
+
+    static (int value, int length) DecodeLiteral(ReadOnlySpan<Bit> bits)
+    {
+        var chunks = new List<int>();
+        for (int i = 0; i < bits.Length; i += 5)
+        {
+            chunks.Add(i);
+            if (bits[i].Value == 0) break;
+        }
+
+        Span<Bit> valueBits = stackalloc Bit[chunks.Count * 4];
+        for (int i = 0, v = 0; i < chunks.Count; i++)
+        {
+            for (int b = chunks[i] + 1; b <= chunks[i] + 4; b++)
+            {
+                valueBits[v++] = bits[b];
+            }
+        }
+        ReadOnlySpan<Bit> result = valueBits;
+
+        return (result.ReadInt(), result.Length + chunks.Count);
     }
 
     static Bit[] ParseInput(string input)
@@ -52,7 +104,7 @@ public static class Day16
         return bits;
     }
 
-    static int ReadInt(Bit[] bits, int start, int length)
+    static int ReadInt(this ReadOnlySpan<Bit> bits, int start, int length)
     {
         int value = 0;
         for (int i = start, p = length - 1; i < start + length; i++, p--)
@@ -62,7 +114,10 @@ public static class Day16
 
         return value;
     }
+    static int ReadInt(this ReadOnlySpan<Bit> bits) => bits.ReadInt(0, bits.Length);
 }
 
+[DebuggerDisplay("{Value}")]
 public record struct Bit(byte Value);
-public record Packet(int Version, int Type, int? LiteralValue = null);
+public record struct Header(int Version, int Type);
+public record Packet(Header Header, int? LiteralValue = null);
